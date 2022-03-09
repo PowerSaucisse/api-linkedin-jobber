@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:14.1-alpine
+    restart: always
+    container_name: pg-jobber
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=jobber
+      - POSTGRES_PASSWORD=jobber
+      - POSTGRES_DB=jobber
+    volumes:
+      - db:/var/lib/postgresql/data
+    # - ./database/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+#    networks:
+#      - default
+    # command: postgres -c config_file=/etc/postgresql/postgresql.conf
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jobber-api:latest
+    command: gunicorn --bind 0.0.0.0:7070 app:api
+    container_name: api-jobber
+#    networks:
+#      - default
+    depends_on:
+      - database
+#    links:
+#      - database
+    ports:
+      - 7070:7070
+    environment:
+      - DB_HOST=pg-jobber
+      - DB_USER=jobber
+      - DB_PASS=jobber
+    stdin_open: true
+    tty: true
+
+volumes:
+  db:
+    driver: local
