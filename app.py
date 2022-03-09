@@ -7,6 +7,7 @@ DB_PORT = os.getenv("DB_PORT", 5432)
 DB_NAME = os.getenv("DB_NAME", "jobber")
 DB_USER = os.getenv("DB_USER", "beehavior")
 DB_PASS = os.getenv("DB_PASS", "beehavior")
+API_SECRET = os.getenv("API_SECRET", "1312-ACAB")
 
 def get_db():
     return psycopg2.connect(
@@ -17,8 +18,17 @@ def get_db():
         dbname=DB_NAME
     )
 
+class AuthorizeAccess:
+    def __call__(self, req, resp, resource, params):
+        if req.auth == API_SECRET:
+            return
+        else:
+            raise falcon.HTTPUnauthorized(title="UNAUTHORIZED", description="You don't have access to this resource")
+
+
 class AccountResource:
 
+    @falcon.before(AuthorizeAccess())
     def on_post(self, req, resp):
         conn = get_db()
         name = req.media["name"]
@@ -33,6 +43,7 @@ class AccountResource:
         resp.status = falcon.HTTP_201
         resp.media = {"title": "CREATED", "description": "Linkedin account added"}
 
+    @falcon.before(AuthorizeAccess())
     def on_get(self, req, resp):
         conn = get_db()
         q1 = None
@@ -58,6 +69,7 @@ class AccountResource:
             }
         }
 
+    @falcon.before(AuthorizeAccess())
     def on_put(self, req, resp):
         link_id = urllib.parse.quote(req.get_param("link_id"))
         conn = get_db()
