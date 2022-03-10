@@ -38,6 +38,7 @@ services:
       - DB_HOST=pg-jobber
       - DB_USER=jobber
       - DB_PASS=jobber
+      - API_SECRET=1312-ACAB
     stdin_open: true
     tty: true
 
